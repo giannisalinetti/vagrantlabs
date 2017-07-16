@@ -1,0 +1,102 @@
+---
+- name: Install Odoo ERP
+  hosts: all
+  remote_user: vagrant
+  become: true
+  become_user: root
+  vars:
+    pgsql_pkg: postgresql-server
+    pgsql_svc: postgresql
+    odoo_pkg: odoo
+    odoo_svc: odoo
+    nginx_pkg: nginx
+    nginx_svc: nginx
+    extra_pkg:
+      - python-psycopg2
+      - epel-release
+      - yum-utils
+
+  tasks:
+    - name: Update system
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install extra packages
+      yum:
+        name: "{{ item }}" 
+        state: latest
+      with_items: "{{ extra_pkg }}"
+
+    - name: Install latest Odoo repo
+      command: yum-config-manager --add-repo=https://nightly.odoo.com/10.0/nightly/rpm/odoo.repo
+      register: odoo_repo
+
+    - debug:
+        var: odoo_repo      
+
+    - name: Install {{ pgsql_pkg }}
+      yum:
+        name: "{{ pgsql_pkg }}"
+        state: latest
+      register: pgsql_setup
+
+    - name: Install {{ odoo_pkg }}
+      yum:
+        name: "{{ odoo_pkg }}"
+        state: latest
+      register: odoo_setup
+
+    - name: Install {{ nginx_pkg }}
+      yum:
+        name: "{{ nginx_pkg }}"
+        state: latest
+      register: nginx_setup
+
+    - name: Initialize db
+      command: postgresql-setup initdb
+      when: pgsql_setup.rc == 0
+      ignore_errors: true
+
+    - name: Template out nginx reverse-proxy
+      template:
+        src: templates/odoo.conf.j2
+        dest: /etc/nginx/conf.d/odoo.conf
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Configure SELinux booleans
+      command: setsebool -P httpd_can_network_connect 1
+      register: selinux_nginx
+      ignore_errors: true
+
+    - debug:
+        var: selinux_nginx
+
+    - name: Start and enable {{ pgsql_svc }}
+      service:
+        name: "{{ pgsql_svc }}"
+        state: started
+        enabled: true
+
+    - name: Create odoo role
+      become_user: postgres
+      vars:
+        ansible_ssh_pipelining: true
+      postgresql_user:
+        name: odoo
+        role_attr_flags: CREATEDB
+
+    - name: Start and enable {{ odoo_svc }}
+      service:
+        name: "{{ odoo_svc }}"
+        state: started
+        enabled: true
+
+    - name: Start and enable {{ nginx_svc }}
+      service:
+        name: "{{ nginx_svc }}"
+        state: started
+        enabled: true
+      when: selinux_nginx.rc == 0

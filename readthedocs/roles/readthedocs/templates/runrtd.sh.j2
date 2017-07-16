@@ -1,0 +1,26 @@
+#!/bin/bash
+# {{ ansible_managed }}
+
+APPPATH={{ venv }}/checkouts/readthedocs.org
+IPADDR=0.0.0.0
+PORT={{ port }}
+LOGDIR={{ logdir }}
+
+if [ ! -d $LOGDIR ]; then
+	mkdir -p $LOGDIR 2> /dev/null
+fi
+
+if [ $? -ne 0 ]; then
+	echo "Error creating log directory"
+	exit 1
+fi
+
+if ss -ltunp | awk '{print $5}' | grep ":${PORT}" > /dev/null; then 
+	echo "Cannot bind port ${PORT}. Port is already used."
+	exit 1
+fi
+
+echo "Running readthedocs instance on ${IPADDR}:${PORT}..."
+/usr/bin/python ${APPPATH}/manage.py runserver ${IPADDR}:${PORT} > ${LOGDIR}/server.log
+
+exit 0

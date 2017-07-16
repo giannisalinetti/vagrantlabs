@@ -1,0 +1,57 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    extra_packages:
+      - git
+      - screen
+      - tree
+      - bind-utils
+
+  tasks:
+    - name: Install Docker
+      yum:
+        name: docker
+        state: latest
+
+    - name: Install auxiliary packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ extra_packages }}"
+
+    - name: Download the oc client binaries
+      unarchive:
+        src: https://github.com/openshift/origin/releases/download/v1.5.1/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit.tar.gz
+        remote_src: true
+        dest: /var/tmp
+      register: result
+
+    - name: Install the oc binaries
+      shell: mv /var/tmp/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit/oc /usr/bin && rm -rf /var/tmp/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit
+      when: result
+
+    - name: Create docker group
+      group:
+        name: docker
+        system: true
+        state: present
+
+    - name: Add docker group to the vagrant user
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+        
+    - name: Start and enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Stop Firewalld
+      service:
+        name: firewalld
+        state: stopped
+        enabled: false

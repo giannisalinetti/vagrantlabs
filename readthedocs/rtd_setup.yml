@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  roles:
+    - role: readthedocs
+      venv: /opt/rtd
+      admin_email: gbsalinetti@extraordy.com

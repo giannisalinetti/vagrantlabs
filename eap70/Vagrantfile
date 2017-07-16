@@ -1,0 +1,108 @@
+# Vagrantfile for JBoss EAP 7.0 lab machine on CentOS7 
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos/7"
+  config.vm.hostname = "eap70.lab.example.com"
+
+  # If Vagrant is running on Windows and there is no rsync installed please uncomment this line.
+  # config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # Memory settings for virtualbox
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 1024
+  end
+
+  # Memory settings for qemu/kvm
+  config.vm.provider "libvirt" do |lv|
+    lv.memory = 1024
+  end
+
+  # Forwarded ports are only the default ports,  add new ports for port-offset customization.
+  # If you need to run more than one vagrant machine you need to adjust the local host ports to avoid conflits.
+ 
+  # config.vm.network "forwarded_port", guest: 8080, host: 8080 host_ip: "127.0.0.1"
+  # config.vm.network "forwarded_port", guest: 9990, host: 9990 host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 9990, host: 9990, host_ip: "127.0.0.1"
+
+  # Shell provisioning begins here
+  config.vm.provision "shell", run: "once", inline: <<-SHELL
+
+    # Install and updated necessary packages
+    sudo yum update -y
+    sudo yum groupinstall -y base
+    sudo yum install -y java-1.8.0-openjdk.x86_64 java-1.8.0-openjdk-devel.x86_64
+    sudo yum install -y git screen tree
+    
+    # Install and configure JBoss EAP 7.0.0
+    if [ -f /vagrant/jboss-eap-7.0.0.zip ]
+    then
+      echo "Extracting local file found in /vagrant/jboss-eap-7.0.0.zip..."
+      sudo unzip -o /vagrant/jboss-eap-7.0.0.zip -d /opt && sudo rm -f /vagrant/jboss-eap-7.0.0.zip || (logger -s -p ERR 'Cannot extract archive' && exit 1)
+    else
+      echo "Downloading jboss-eap-7.0.0.zip from common repository..."
+      wget https://www.dropbox.com/s/45a7mttvdhmeslr/jboss-eap-7.0.0.zip?dl=0 -O /tmp/jboss-eap-7.0.0.zip &> /dev/null
+      if [ -f /tmp/jboss-eap-7.0.0.zip ] 
+      then
+        sudo unzip -o /tmp/jboss-eap-7.0.0.zip -d /opt && rm -f /tmp/jboss-eap-7.0.0.zip || (logger -s -p ERR 'Cannot extract archive' && exit 1)
+      else
+        logger -s -p ERR 'Error downloading JBoss EAP 7.0 archive'
+        exit 1
+      fi
+    fi
+
+    if [ -d /opt/jboss-eap-7.0 ]
+    then
+      sudo useradd -r jboss
+      sudo chown -R jboss:jboss /opt/jboss-eap-7.0
+      sudo -u jboss /opt/jboss-eap-7.0/bin/add-user.sh -s -e -u jbossadm -p JBoss@RedHat123
+    fi
+
+    # Disable firewalld
+    if systemctl is-enabled firewalld &> /dev/null
+    then
+      echo "Disabling firewalld..."
+      sudo systemctl stop firewalld
+      sudo systemctl disable firewalld
+    fi
+
+    # Install Maven for quickstarts building
+    wget http://www-eu.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz -O /tmp/apache-maven-3.3.9-bin.tar.gz
+    if [ $? -ne 0 ]
+    then
+      logger -s -p ERR 'Error downloading Maven'
+      exit 1
+    else
+      sudo tar zxvf /tmp/apache-maven-3.3.9-bin.tar.gz -C /opt
+      sudo ln -s /opt/apache-maven-3.3.9 /opt/maven
+      sudo chown -R jboss:jboss /opt/maven
+      echo 'export M2_HOME=/opt/maven' | sudo tee -a /etc/profile.d/maven.sh
+      echo 'export PATH=${M2_HOME}/bin:${PATH}' | sudo tee -a /etc/profile.d/maven.sh 
+    fi
+    
+
+########################################################
+# Don't modify indentation of this block
+cat > /home/vagrant/EAP7.0_README << EOF
+Installation Summary:
+JBoss EAP 7.0 has been installed under the directory /opt/jboss-eap-7.0 owned by the system user jboss.
+
+Management Users:
+After customizion and process startup, please use the following credentials to login on the management console:
+  Username: jbossadm
+  Password: JBoss@RedHat123
+
+Maven:
+For testing purposes, Apache Maven has been installed under the directory /opt/maven owned by the system user jboss.
+To build an application run the following command from the application directory:
+$ mvn clean install
+
+Firewall:
+Firewalld has been disabled to ease the port-offset management.
+To enable firewalld again please run:
+$  sudo systemctl start firewalld && sudo systemctl enable firewalld
+EOF
+########################################################
+  SHELL
+
+end

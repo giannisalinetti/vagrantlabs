@@ -1,0 +1,7 @@
+---
+# defaults file for readthedocs
+
+venv: /opt/rtd
+admin_email: root@localhost
+port: 8000
+logdir: /var/log/rtd

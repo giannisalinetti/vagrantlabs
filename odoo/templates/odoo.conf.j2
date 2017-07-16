@@ -1,0 +1,13 @@
+upstream openerp {
+    server 127.0.0.1:8069;
+}
+
+server {
+    listen 8080 default;
+    access_log /var/log/nginx/openerp.access.log;
+    error_log   /var/log/nginx/openerp.error.log;
+    location / {
+        proxy_pass http://openerp;
+    }
+}
+        
