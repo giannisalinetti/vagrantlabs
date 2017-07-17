@@ -1,0 +1,93 @@
+---
+- name: Install the ELK stack
+  hosts: all
+  become: true
+  remote_user: vagrant
+  become_user: root
+  vars:
+    elk_pkg:
+      - elasticsearch
+      - logstash
+      - kibana
+      - nginx
+    java_pkg: 
+      - java-1.8.0-openjdk
+    
+  tasks:
+    - name: Import the repo key
+      command: rpm --import http://packages.elasticsearch.org/GPG-KEY-elasticsearch
+      ignore_errors: true
+
+    - name: Copy repo file
+      copy:
+        src: files/elk.repo
+        dest: /etc/yum.repos.d/
+        owner: root
+        group: root
+        mode: 0644  
+
+    - name: Install EPEL repos
+      yum:
+        name: epel-release
+        state: latest  
+
+    - name: Install Java Openjdk
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ java_pkg }}"
+
+    - name: Install ELK stack packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ elk_pkg }}"
+
+    - name: Copy htpasswd file for user kibanaadmin/redhat
+      copy:
+        src: files/htpasswd.users
+        dest: /etc/nginx/htpasswd.users
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Template out kibana config
+      template:
+        src: templates/kibana.yml.j2
+        dest: /etc/kibana/kibana.yml
+        owner: root
+        group: root
+        mode: 0644
+   
+    - name: Template out nginx config
+      template:
+        src: templates/default.conf.j2
+        dest: /etc/nginx/conf.d/default.conf
+
+    - name: Configure SELinux booleans
+      command: setsebool -P httpd_can_network_connect 1
+      register: selinux_nginx
+      ignore_errors: true
+
+    - debug:
+        var: selinux_nginx
+
+    - name: Start and enable Elasticsearch service
+      service:
+        name: elasticsearch
+        state: started
+        enabled: yes
+
+    - name: Start and enable Kibana service
+      systemd:
+        name: kibana
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Start and enable Nginx service
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
