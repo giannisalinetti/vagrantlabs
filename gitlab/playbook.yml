@@ -1,0 +1,42 @@
+---
+- name: Configure GitLab server
+  hosts: all
+  remote_user: vagrant
+  become: true
+  become_user: root
+  vars:
+    deps:
+      - curl
+      - policycoreutils
+      - openssh-server
+      - openssh-client
+    db_pkg: postfix
+    db_svc: postfix
+    gitlab_pkg: gitlab-ce
+  tasks:
+    - name: Install {{ db_pkg }}
+      yum:
+        name: "{{ db_pkg }}"
+        state: latest
+
+    - name: Start/Enable {{ db_svc }}
+      service:
+        name: "{{ db_svc }}"
+        state: started
+        enabled: true
+
+    - name: Configure GitLab repos
+      shell: curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | sudo bash
+      ignore_errors: true
+
+    - name: Install {{ gitlab_pkg }}
+      yum:
+        name: "{{ gitlab_pkg }}"
+        state: latest
+
+    - name: Configure and start Gitlab
+      command: gitlab-ctl reconfigure
+
+    - name: Configuration Info
+      debug:
+        msg: "GitLab running on {{ ansible_default_ipv4.address }}:80"
