@@ -1,0 +1,62 @@
+---
+- name: Install Puppet Master
+  hosts: master
+  remote_user: vagrant
+  become: true
+  become_user: root
+  vars:
+    epel_pkg: epel-release
+    puppet_srv_pkg: puppet-server
+    puppet_srv_svc: puppetmaster
+    extra_pkg:
+      - git
+      - vim
+      - wget
+
+  tasks:
+    - name: Update system
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install {{ epel_pkg }}
+      yum:
+        name: "{{ epel_pkg }}"
+        state: latest
+
+    - name: Install {{ puppet_srv_pkg }}
+      yum:
+        name: "{{ puppet_srv_pkg }}"
+        state: latest
+
+    - name: Install additional tools
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ extra_pkg }}"
+
+    - name: Change SELinux mode to permissive
+      selinux:
+        policy: targeted
+        state: permissive
+
+    - name: Fix Vagrant host resolution
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ ansible_default_ipv4.address }} {{ ansible_fqdn }}"
+      delegate_to: "{{ item }}"
+      with_items:
+        - master
+        - client
+
+    - name: Generate autosign.conf file on master
+      copy:
+        content: "*"
+        dest: /etc/puppet/autosign.conf
+
+    - name: Start/Enable "{{ puppet_srv_svc }}"
+      service:
+        name: "{{ puppet_srv_svc }}"
+        state: started
+        enabled: true
+

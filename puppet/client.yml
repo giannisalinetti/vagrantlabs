@@ -1,0 +1,71 @@
+---
+- name: Install Puppet
+  hosts: client
+  remote_user: vagrant
+  become: true
+  become_user: root
+  vars:
+    epel_pkg: epel-release
+    puppet_cli_pkg: puppet
+    puppet_cli_svc: puppet
+    extra_pkg:
+      - git
+      - vim
+      - wget
+
+  tasks:
+    - name: Update system
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install {{ epel_pkg }}
+      yum:
+        name: "{{ epel_pkg }}"
+        state: latest
+
+    - name: Install {{ puppet_cli_pkg }}
+      yum:
+        name: "{{ puppet_cli_pkg }}"
+        state: latest
+
+    - name: Install additional tools
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ extra_pkg }}"
+
+    - name: Change SELinux mode to permissive
+      selinux:
+        policy: targeted
+        state: permissive
+
+    - name: Fix Vagrant host resolution
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ ansible_default_ipv4.address }} {{ ansible_fqdn }}"
+      delegate_to: "{{ item }}"
+      with_items:
+        - master
+        - client
+
+    - name: Configure puppet agent
+      lineinfile:
+        path: /etc/puppet/puppet.conf
+        line: "server = master.puppetlab.com"
+
+    - name: Pause 30 seconds to let master start
+      pause:
+        seconds: 30
+
+    - name: Wait for master service
+      wait_for:
+        port: 8140
+        delay: 10
+      delegate_to: master
+
+    - name: Start/Enable "{{ puppet_cli_svc }}"
+      service:
+        name: "{{ puppet_cli_svc }}"
+        state: started
+        enabled: true
