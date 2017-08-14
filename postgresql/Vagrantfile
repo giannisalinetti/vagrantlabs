@@ -3,10 +3,13 @@ Vagrant.configure(2) do |config|
 
   config.vm.define "pg01" do |pg01|
     pg01.vm.box = "centos/7"
-    pg01.vm.hostname = "pg01.originlab.com"
+    pg01.vm.hostname = "pg01.postgreslab.com"
     pg01.vm.network "private_network", ip: "10.1.10.150"
     pg01.vm.provider "libvirt" do |lv|
       lv.memory = "2048"
+    end
+    pg01.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
     end
     pg01.vm.provision "ansible" do |ansible|
       ansible.playbook = "playbook.yml"
@@ -15,10 +18,13 @@ Vagrant.configure(2) do |config|
 
   config.vm.define "pg02" do |pg02|
     pg02.vm.box = "centos/7"
-    pg02.vm.hostname = "pg02.originlab.com"
+    pg02.vm.hostname = "pg02.postgreslab.com"
     pg02.vm.network "private_network", ip: "10.1.10.155"
     pg02.vm.provider "libvirt" do |lv|
       lv.memory = "2048"
+    end
+    pg02.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
     end
     pg02.vm.provision "ansible" do |ansible|
       ansible.playbook = "playbook.yml"
