@@ -1,0 +1,78 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    extra_packages:
+      - git
+      - screen
+      - tree
+      - bind-utils
+    origin_packages:
+      - origin-clients
+      - atomic-openshift-utils
+
+  tasks:
+
+    - name: Base package group is installed
+      yum:
+        name: "@base"
+        state: latest
+
+    - name: System is updated
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Install Docker
+      yum:
+        name: docker
+        state: latest
+
+    - name: Install auxiliary packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ extra_packages }}"
+
+    - name: Create docker group
+      group:
+        name: docker
+        system: true
+        state: present
+
+    - name: Add docker group to the vagrant user
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+        
+    - name: Stop Firewalld
+      service:
+        name: firewalld
+        state: stopped
+        enabled: false
+
+    - name: Origin repos are defined
+      yum:
+        name: centos-release-openshift-origin
+        state: latest
+
+    - name: Origin CLI and Utils are installed
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ origin_packages }}"
+
+    - name: Enable internal insecure registry
+      lineinfile:
+        path: /etc/sysconfig/docker
+        regexp: "OPTIONS='--selinux-enabled --log-driver=journald --signature-verification=false'"
+        line: "OPTIONS='--selinux-enabled --log-driver=journald --signature-verification=false --insecure-registry=172.30.0.0/16'"
+        state: present
+
+    - name: Start and enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
