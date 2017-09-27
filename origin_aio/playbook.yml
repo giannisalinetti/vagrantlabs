@@ -5,7 +5,7 @@
   vars:
     extra_packages:
       - git
-      - screen
+      - tmux
       - tree
       - bind-utils
     origin_packages:
@@ -13,7 +13,6 @@
       - atomic-openshift-utils
 
   tasks:
-
     - name: Base package group is installed
       yum:
         name: "@base"
@@ -24,30 +23,30 @@
         name: "*"
         state: latest
 
-    - name: Install Docker
+    - name: Package Docker is installed
       yum:
         name: docker
         state: latest
 
-    - name: Install auxiliary packages
+    - name: Auxiliary packages are installed
       yum:
         name: "{{ item }}"
         state: latest
       with_items: "{{ extra_packages }}"
 
-    - name: Create docker group
+    - name: Docker group is present
       group:
         name: docker
         system: true
         state: present
 
-    - name: Add docker group to the vagrant user
+    - name: Vagrant user is in the docker group
       user:
         name: vagrant
         groups: docker
         append: yes
         
-    - name: Stop Firewalld
+    - name: Service firewalld is disabled
       service:
         name: firewalld
         state: stopped
@@ -71,7 +70,7 @@
         line: "OPTIONS='--selinux-enabled --log-driver=journald --signature-verification=false --insecure-registry=172.30.0.0/16'"
         state: present
 
-    - name: Start and enable Docker service
+    - name: Docker service is started and enabled
       service:
         name: docker
         state: started
