@@ -3,8 +3,10 @@
   become: true
   become_user: root
   vars:
+    data_dir: "/var/lib/etcd"
     extra_packages:
       - git
+      - wget
       - tmux
       - tree
       - bind-utils
@@ -54,7 +56,7 @@
 
     - name: Origin repos are defined
       yum:
-        name: centos-release-openshift-origin
+        name: centos-release-openshift-origin39
         state: latest
 
     - name: Origin CLI and Utils are installed
@@ -75,3 +77,17 @@
         name: docker
         state: started
         enabled: true
+
+    - name: Create the data directory
+      file:
+        name: "{{ data_dir }}"
+        state: directory
+        mode: 0755
+    
+    - name: Provision the management script
+      copy:
+        src: files/oc-cluster-up.sh
+        dest: /home/vagrant
+        owner: vagrant
+        group: vagrant
+        mode: 0755
