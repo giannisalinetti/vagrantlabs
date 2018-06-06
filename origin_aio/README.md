@@ -39,5 +39,5 @@ The docker daemon is automatically started at boot.
 The latest OpenShift Origin client is installed. To run a complete Origin cluster on the single machine run:
 
 ```shell
-# oc cluster up
+# /home/vagrant/oc-cluster-up.sh
 ```
