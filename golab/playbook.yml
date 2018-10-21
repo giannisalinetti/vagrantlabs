@@ -1,0 +1,74 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  vars:
+    extra_packages:
+      - git
+      - screen
+      - tree
+      - bind-utils
+      - vim
+    go_bin: "https://dl.google.com/go/go1.8.7.linux-amd64.tar.gz"
+    sys_profile: "/etc/profile"
+    vagrant_profile: "/home/vagrant/.bash_profile"
+    gopath: "/home/vagrant/go"
+    goroot: "/usr/local/go"
+
+  tasks:
+    - name: Download and extract Go binaries
+      unarchive:
+        src: "{{ go_bin }}"
+        dest: /usr/local
+        remote_src: true
+
+    - name: Update the PATH environment variable
+      lineinfile:
+        path: "{{ sys_profile }}"
+        line: 'export PATH=$PATH:/usr/local/go/bin'
+
+    - name: Update the GOPATH environment variable
+      lineinfile:
+        path: "{{ vagrant_profile }}"
+        line: "export GOPATH={{ gopath }}"
+
+    - name: Update the GOROOT environment variable
+      lineinfile:
+        path: "{{ vagrant_profile }}"
+        line: "export GOROOT={{ goroot }}"
+
+    - name: Create the GOPATH directory
+      file:
+        path: "{{ gopath }}"
+        state: directory
+        mode: 0755
+
+    - name: Install Docker
+      yum:
+        name: docker
+        state: latest
+
+    - name: Install auxiliary packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ extra_packages }}"
+
+    - name: Add docker group to the vagrant user
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+        
+    - name: Start and enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Stop Firewalld
+      service:
+        name: firewalld
+        state: stopped
+        enabled: false
+
