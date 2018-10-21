@@ -14,7 +14,10 @@
     vagrant_profile: "/home/vagrant/.bash_profile"
     gopath: "/home/vagrant/go"
     goroot: "/usr/local/go"
-
+    gopath_subdirs:
+      - bin
+      - src
+      - pkg
   tasks:
     - name: Download and extract Go binaries
       unarchive:
@@ -43,6 +46,13 @@
         state: directory
         mode: 0755
 
+    - name: Create GOPATH subdirectories
+      file:
+        path: "{{ gopath }}/{{ item }}"
+        state: directory
+        mode: 0755
+      loop: "{{ gopath_subdirs }}"
+
     - name: Install Docker
       yum:
         name: docker
@@ -53,6 +63,11 @@
         name: "{{ item }}"
         state: latest
       with_items: "{{ extra_packages }}"
+
+    - name: Create docker group
+      group:
+        name: docker
+        state: present
 
     - name: Add docker group to the vagrant user
       user:

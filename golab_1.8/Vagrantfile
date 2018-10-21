@@ -1,0 +1,34 @@
+# Vagrantfile for Docker Lab machine on CentOS7 
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos/7"
+  config.vm.hostname = "golab.example.com"
+
+  # If Vagrant is running on Windows and there is no rsync installed please uncomment this line.
+  # config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # Memory settings for virtualbox
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 2048
+  end
+
+  # Memory settings for qemu/kvm
+  config.vm.provider "libvirt" do |lv|
+    lv.memory = 2048
+  end
+
+  # Shell provisioning begins here
+  config.vm.provision "shell", run: "once", inline: <<-SHELL
+
+    # Install and updated necessary packages
+    sudo yum update -y
+    sudo yum groupinstall -y base
+    sudo yum install -y epel-release
+    sudo yum install -y ansible
+  SHELL
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "playbook.yml"
+  end
+
+end
