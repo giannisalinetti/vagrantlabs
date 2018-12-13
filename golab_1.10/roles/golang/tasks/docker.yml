@@ -1,0 +1,22 @@
+---
+- name: Install Docker
+  yum:
+    name: docker
+    state: latest
+
+- name: Create docker group
+  group:
+    name: docker
+    state: present
+
+- name: Add docker group to the vagrant user
+  user:
+    name: vagrant
+    groups: docker
+    append: yes
+    
+- name: Start and enable Docker service
+  service:
+    name: docker
+    state: started
+    enabled: true

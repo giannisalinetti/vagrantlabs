@@ -1,0 +1,6 @@
+---
+- name: Install auxiliary packages
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items: "{{ extra_packages }}"

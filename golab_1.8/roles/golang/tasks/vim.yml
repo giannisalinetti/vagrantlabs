@@ -1,0 +1,24 @@
+---
+- name: Create autoload folder
+  file:
+    path: "{{ vim_autoload_dir }}"
+    state: directory
+    mode: 0755
+    owner: "{{ user }}"
+    group: "{{ group }}"
+
+- name: Download vim-plug
+  get_url:
+    url: "{{ vim_plug }}"
+    dest: "{{ vim_autoload_dir }}"
+    mode: 0644
+    owner: "{{ user }}"
+    group: "{{ group }}"
+
+- name: Configure vim plugins
+  template:
+    src: vimrc.j2
+    dest: "/home/{{ user }}/.vimrc"
+    mode: 0644
+    owner: "{{ user }}"
+    group: "{{ group }}"

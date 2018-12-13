@@ -1,0 +1,15 @@
+---
+extra_packages:
+  - git
+  - screen
+  - tree
+  - bind-utils
+  - vim
+sys_profile: "/etc/profile"
+goroot: "/usr/local/go"
+gobin: "{{ goroot }}/bin"
+gopath_subdirs:
+  - bin
+  - src
+  - pkg
+vim_plug: "https://github.com/junegunn/vim-plug/releases/download/0.9.1/plug.vim"

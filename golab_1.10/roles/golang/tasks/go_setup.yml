@@ -1,0 +1,39 @@
+---
+- name: Download and extract Go binaries
+  unarchive:
+    src: "{{ go_dist }}"
+    dest: /usr/local
+    remote_src: true
+    creates: "{{ goroot }}"
+
+- name: Update the PATH environment variable
+  lineinfile:
+    path: "{{ sys_profile }}"
+    line: 'export PATH=$PATH:/usr/local/go/bin'
+
+- name: Update the GOPATH environment variable
+  lineinfile:
+    path: "{{ vagrant_profile }}"
+    line: "export GOPATH={{ gopath }}"
+
+- name: Update the GOROOT environment variable
+  lineinfile:
+    path: "{{ vagrant_profile }}"
+    line: "export GOROOT={{ goroot }}"
+
+- name: Create the GOPATH directory
+  file:
+    path: "{{ gopath }}"
+    state: directory
+    owner: vagrant
+    group: vagrant
+    mode: 0755
+
+- name: Create GOPATH subdirectories
+  file:
+    path: "{{ gopath }}/{{ item }}"
+    state: directory
+    mode: 0755
+    owner: vagrant
+    group: vagrant
+  loop: "{{ gopath_subdirs }}"

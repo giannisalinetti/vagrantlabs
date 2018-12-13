@@ -1,0 +1,22 @@
+---
+go_dist: "https://dl.google.com/go/go1.11.1.linux-amd64.tar.gz"
+vagrant_profile: "/home/vagrant/.bash_profile"
+gopath: "/home/vagrant/go"
+go_pkgs:
+  - golang.org/x/net
+  - golang.org/x/crypto
+  - golang.org/x/oauth2
+  - golang.org/x/sys
+  - golang.org/x/tools
+  - google.golang.org/grpc
+  - gopkg.in/yaml.v2
+  - github.com/urfave/cli
+  - github.com/spf13/cobra
+  - github.com/sirupsen/logrus
+  - github.com/golang/glog
+  - github.com/golang/protobuf
+  - github.com/golang/lint
+  - github.com/golang/dep
+user: vagrant
+group: vagrant
+vim_autoload_dir: "/home/{{ user }}/.vim/autoload/"

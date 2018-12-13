@@ -1,0 +1,10 @@
+---
+- name: "Download extra Go packages"
+  shell: "{{ gobin }}/go get -u {{ item }}"
+  become: false
+  ignore_errors: true
+  register: command_result
+  with_items: "{{ go_pkgs }}"
+  failed_when:
+    - "command_result.rc != 0"
+    - "'no buildable Go source files' not in command_result.stderr"

@@ -1,0 +1,18 @@
+---
+- name: Install and configure Go
+  include_tasks: go_setup.yml
+
+- name: Download Go packages
+  include_tasks: go_pkgs.yml
+
+- name: Configure Docker
+  include_tasks: docker.yml
+
+- name: Configure extra packages
+  include_tasks: extra_pkgs.yml
+
+- name: Configure firewall
+  include_tasks: firewalld.yml
+
+- name: Configure vim
+  include_tasks: vim.yml
