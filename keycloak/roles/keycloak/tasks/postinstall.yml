@@ -1,0 +1,22 @@
+---
+- name: Install Maven
+  unarchive:
+    src: "{{ maven_url }}"
+    dest: "{{ install_path }}"
+    remote_src: yes
+    creates: "{{ install_path}}/apache-maven-{{ maven_version }}"
+
+- name: Create symlink to /usr/bin
+  file:
+    src: "{{ install_path }}/apache-maven-{{ maven_version }}/bin/mvn"
+    dest: /usr/bin/mvn
+    owner: root
+    group: root
+    state: link
+
+- name: Clone Quickstarts repository
+  git:
+    repo: https://github.com/keycloak/keycloak-quickstarts.git
+    dest: /home/vagrant/keycloak-quickstarts
+  become: false
+

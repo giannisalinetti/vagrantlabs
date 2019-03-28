@@ -1,0 +1,21 @@
+---
+# defaults file for keycloak
+
+install_path: /opt
+keycloak_site_url: "https://downloads.jboss.org/keycloak"
+keycloak_version: "5.0.0"
+keycloak_url: "{{ keycloak_site_url }}/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.zip"
+keycloak_user: keycloak
+keycloak_group: keycloak
+
+maven_site_url: "http://it.apache.contactlab.it/maven/maven-3"
+maven_version: "3.6.0"
+maven_url: "{{ maven_site_url }}/{{ maven_version }}/binaries/apache-maven-{{ maven_version }}-bin.tar.gz"
+
+wildfly_site_url: "https://download.jboss.org/wildfly"
+wildfly_version: "15.0.1.Final"
+wildfly_url: "{{ wildfly_site_url }}/{{ wildfly_version }}/wildfly-{{ wildfly_version }}.zip"
+wildfly_user: jboss
+wildfly_group: jboss
+
+wildfly_adapter_url: "{{ keycloak_site_url }}/{{ keycloak_version }}/adapters/keycloak-oidc/keycloak-wildfly-adapter-dist-{{ keycloak_version }}.zip"

@@ -1,0 +1,26 @@
+---
+- name: Define the Wildfly process user
+  user:
+    name: "{{ wildfly_user }}"
+    shell: "/sbin/nologin"
+    system: true
+    create_home: false
+
+- name: Install Wildfly application server
+  unarchive:
+    src: "{{ wildfly_url }}"
+    dest: "{{ install_path }}"
+    remote_src: yes
+    owner: "{{ wildfly_user }}"
+    group: "{{ wildfly_group }}"
+    creates: "{{ install_path }}/wildfly-{{ wildfly_version }}"
+
+- name: Install Keycloak client adapter for Wildfly
+  unarchive:
+    src: "{{ wildfly_adapter_url }}"
+    dest: "{{ install_path }}/wildfly-{{ wildfly_version }}"
+    remote_src: yes
+    owner: "{{ wildfly_user }}"
+    group: "{{ wildfly_group }}"
+    creates: "{{ install_path }}/wildfly-{{ wildfly_version }}/modules/system/add-ons/keycloak"
+

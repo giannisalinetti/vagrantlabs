@@ -1,0 +1,43 @@
+# Vagrantfile for Keycloak Lab machine on CentOS7 
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos/7"
+  config.vm.hostname = "keycloak.example.com"
+
+  # If Vagrant is running on Windows and there is no rsync installed please uncomment this line.
+  # config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # Memory settings for virtualbox
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 4096
+  end
+
+  # Memory settings for qemu/kvm
+  config.vm.provider "libvirt" do |lv|
+    lv.memory = 4096
+  end
+
+  # Configuring the port forwarding for Wildfly
+  config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 9990, host: 9990, host_ip: "127.0.0.1"
+  # Configuring the port forwarding for Keycloak with +100 offset
+  config.vm.network "forwarded_port", guest: 8180, host: 8180, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 10090, host: 10090, host_ip: "127.0.0.1"
+  
+  # Shell provisioning begins here
+  config.vm.provision "shell", run: "once", inline: <<-SHELL
+
+    # Install and updated necessary packages
+    sudo yum update -y
+    sudo yum groupinstall -y base
+    # To enable ansible_local provisoning the following lines must be uncommented
+    # sudo yum install -y epel-release
+    # sudo yum install -y ansible
+  SHELL
+
+  # Ansible provisioning begins here
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "playbook.yml"
+  end
+
+end

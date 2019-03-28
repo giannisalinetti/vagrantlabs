@@ -1,0 +1,6 @@
+---
+# tasks file for keycloak
+- include_tasks: preinstall.yml
+- include_tasks: install_keycloak.yml
+- include_tasks: install_wildfly.yml
+- include_tasks: postinstall.yml

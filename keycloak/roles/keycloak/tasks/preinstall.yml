@@ -1,0 +1,18 @@
+---
+- name: Install OpenJDK 1.8
+  yum:
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - java-1.8.0-openjdk.x86_64
+    - java-1.8.0-openjdk-devel.x86_64
+
+- name: Install extra tools
+  yum:
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - git
+    - tmux
+    - tree
+
